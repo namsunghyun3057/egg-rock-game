@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Threshold: 계란으로 바위 치기</title>
+    <style>
+        /* [스타일] 전체 배경 및 레이아웃 */
+        body {
+            background-color: #1a1a1a;
+            color: #eee;
+            font-family: 'Pretendard', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0 0 10px 0; font-size: 2rem; }
+        .sub-text { color: #888; margin-bottom: 20px; font-size: 0.9rem; }
+
+        /* [게임 스테이지] */
+        #game-stage {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 바위 이미지 */
+        #rock-image {
+            width: 400px;
+            height: auto;
+            object-fit: contain;
+            z-index: 10;
+            transition: transform 0.1s;
+        }
+
+        /* [수정됨] 날아가는 계란 크기 확대 */
+        .flying-egg {
+            position: absolute;
+            width: 100px; /* 기존 40px -> 100px로 확대 (왕란!) */
+            height: auto;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%) rotate(0deg);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* [애니메이션] 바위 흔들림 */
+        .shake { animation: shake-ani 0.2s linear; }
+        @keyframes shake-ani {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-5px, 2px) rotate(-1deg); }
+            50% { transform: translate(5px, -2px) rotate(1deg); }
+            75% { transform: translate(-3px, 1px) rotate(0deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* [UI] 하단 컨트롤 패널 */
+        #ui-panel {
+            margin-top: 20px;
+            text-align: center;
+            z-index: 30;
+        }
+
+        #counter { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
+        .count-highlight { color: #f4d03f; }
+
+        /* [수정됨] 버튼 계란 크기 확대 */
+        #throw-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        #throw-btn img {
+            width: 100px; /* 기존 60px -> 100px로 확대 */
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        }
+        #throw-btn:active img { transform: scale(0.9); }
+        #throw-btn:hover img { filter: drop-shadow(0 0 15px rgba(244, 208, 63, 0.6)); }
+
+        /* 게임 종료 시 스타일 */
+        .disabled { filter: grayscale(100%); pointer-events: none; opacity: 0.5; }
+        .success-msg { color: #4CAF50; font-size: 1.2rem; font-weight: bold; margin-top: 10px; animation: pop-in 0.5s; }
+        
+        @keyframes pop-in {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1></h1>
+    <p class="sub-text">"계란을 클릭해 바위를 깨뜨리세요."</p>
+
+    <div id="game-stage">
+        <img id="rock-image" src="rock.png" alt="바위">
+    </div>
+
+    <div id="ui-panel">
+        <div id="counter">던진 횟수: <span id="count-num" class="count-highlight">0</span></div>
+        
+        <button id="throw-btn" onclick="throwEgg()">
+            <img src="egg.png" alt="계란 던지기">
+        </button>
+        <div id="result-msg"></div>
+    </div>
+
+    <script>
+        let count = 0;
+        let targetCount = 0;
+        let isGameClear = false;
+
+        const rockElem = document.getElementById('rock-image');
+        const countElem = document.getElementById('count-num');
+        const stageElem = document.getElementById('game-stage');
+        const throwBtn = document.getElementById('throw-btn');
+        const resultMsg = document.getElementById('result-msg');
+
+        function init() {
+            targetCount = Math.floor(Math.random() * (52 - 33 + 1)) + 33;
+            console.log("목표 횟수(Cheat):", targetCount);
+        }
+        init();
+
+        function throwEgg() {
+            if (isGameClear) return;
+
+            const flyingEgg = document.createElement('img');
+            flyingEgg.src = 'egg.png';
+            flyingEgg.className = 'flying-egg';
+            stageElem.appendChild(flyingEgg);
+
+            setTimeout(() => {
+                // 바위쪽으로 날아가면서 작아지는 비율 조정
+                // scale(0.5) -> scale(0.6)으로 살짝 더 크게 보이게 조정함
+                flyingEgg.style.bottom = '250px'; 
+                flyingEgg.style.transform = 'translateX(-50%) scale(0.6) rotate(360deg)'; 
+                flyingEgg.style.opacity = '1';
+            }, 10);
+
+            setTimeout(() => {
+                flyingEgg.remove();
+                hitRock();
+            }, 500); 
+        }
+
+        function hitRock() {
+            count++;
+            countElem.innerText = count;
+
+            rockElem.classList.remove('shake');
+            void rockElem.offsetWidth; 
+            rockElem.classList.add('shake');
+
+            if (count >= targetCount) {
+                gameWin();
+            }
+        }
+
+        function gameWin() {
+            isGameClear = true;
+            rockElem.src = 'rock_broken.png';
+            rockElem.style.transform = 'scale(1.1)'; 
+            throwBtn.classList.add('disabled');
+            resultMsg.innerHTML = "🎉 축하합니다! " + count + "번 시도 끝에 바위를 이겼습니다.";
+            resultMsg.className = "success-msg";
+        }
+    </script>
+</body>
+</html>
