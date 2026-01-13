@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>바위를 이기는 방법</title>
+    <title>창사표 과제 - 바위를 이기는 방법 :: C조</title>
     <style>
         /* [스타일] 전체 배경 및 레이아웃 */
         body {
             background-color: #1a1a1a;
             color: #eee;
-            font-family: 'Pretendard', sans-serif;
+            font-family: 'Pretendard', 'Consolas', monospace;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -107,13 +107,54 @@
             0% { opacity: 0; transform: scale(0.5); }
             100% { opacity: 1; transform: scale(1); }
         }
+        #debug-console {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            height: auto;
+            max-height: 200px;
+            background-color: rgba(0, 0, 0, 0.7); /* 반투명 검정 */
+            color: #00ff00; /* 해커 느낌 형광 초록 */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 11px;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #00ff00;
+            overflow: hidden;
+            z-index: 999;
+            text-align: left;
+            pointer-events: none; /* 클릭 통과 */
+            display: flex;
+            flex-direction: column-reverse; /* 최신 로그가 위로 오게 */
+        }
+
+        .log-item {
+            margin-bottom: 4px;
+            opacity: 0.8;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+            padding-bottom: 2px;
+        }
+        .log-item:first-child {
+            opacity: 1;
+            font-weight: bold;
+            color: #ccffcc;
+        }
     </style>
 </head>
 <body>
 
     <h1>바위를 이기는 방법</h1>
-    <p class="sub-text">"아마 여기에 선주님 계산 들어가면 어떨까요"</p>
-
+    <p>
+        [계산 과정]<br>
+        달걀 질량: 0.06kg, 중력가속도: 9.8m/s^2<br>
+        공기저항, 위치에너지 0일 가정하에 운동에너지가 달걀1개의 충돌시 에너지 (=데미지)라고 계산 >> 12j<br>
+        투척 속도가 80m/s ~ 150m/s에서 랜덤 생성 (야구 투수의 투척속도 고려)<br>
+        충돌시간 0.01초라고 생각하면 바위에 강해지는 데미지는 1920N~3000N<br>
+        바위가 화강암이라고 가정할시 압축강도는 130MPa이지만, 게임의 진행을 위해 가정값 도입
+    </p>
+    
+    
     <div id="game-stage">
         <img id="rock-image" src="rock.png" alt="바위">
     </div>
@@ -126,6 +167,9 @@
         </button>
         <div id="result-msg"></div>
     </div>
+    <p class="sub-text">[제작(전자전기, 컴퓨터) - 전희창, 남성현]</p>
+    <p class="sub-text">[계산(기계) - 한선주]</p>
+    <p class="sub-text">[디자인(영상, 디자인) - 최소영, 최규림]</p>
 
     <script>
         let count = 0;
@@ -139,7 +183,7 @@
         const resultMsg = document.getElementById('result-msg');
 
         function init() {
-            targetCount = Math.floor(Math.random() * (52 - 33 + 1)) + 33;
+            targetCount = Math.floor(Math.random() * (48 - 33 + 1)) + 33;
             console.log("목표 횟수:", targetCount);
         }
         init();
@@ -161,6 +205,8 @@
             btnImg.style.transform = 'scale(0.9)';
             setTimeout(() => { btnImg.style.transform = 'scale(1)'; }, 100);
 
+            //printPhysicsLog();
+
             const flyingEgg = document.createElement('img');
             flyingEgg.src = 'egg.png';
             flyingEgg.className = 'flying-egg';
@@ -177,6 +223,7 @@
                 flyingEgg.remove();
                 hitRock();
             }, 500); 
+
         }
 
         function hitRock() {
