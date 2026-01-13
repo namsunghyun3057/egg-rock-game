@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>The Threshold: 계란으로 바위 치기</title>
+    <title>바위를 이기는 방법</title>
     <style>
         /* [스타일] 전체 배경 및 레이아웃 */
         body {
@@ -111,15 +111,15 @@
 </head>
 <body>
 
-    <h1>Threshold</h1>
-    <p class="sub-text">"임계점을 향한 노크"</p>
+    <h1>바위를 이기는 방법</h1>
+    <p class="sub-text">"아마 여기에 선주님 계산 들어가면 어떨까요"</p>
 
     <div id="game-stage">
         <img id="rock-image" src="rock.png" alt="바위">
     </div>
 
     <div id="ui-panel">
-        <div id="counter">NO. <span id="count-num" class="count-highlight">0</span></div>
+        <div id="counter">던진 횟수: <span id="count-num" class="count-highlight">0</span></div>
         
         <button id="throw-btn">
             <img src="egg.png" alt="계란 던지기">
@@ -197,7 +197,7 @@
             rockElem.src = 'rock_broken.png';
             rockElem.style.transform = 'scale(1.1)'; 
             throwBtn.classList.add('disabled');
-            resultMsg.innerHTML = "🎉 축하합니다!<br>시스템이 해방되었습니다.";
+            resultMsg.innerHTML = "🎉 축하합니다! 바위를 이겼습니다.";
             resultMsg.className = "success-msg";
         }
     </script>
