@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>The Threshold: 계란으로 바위 치기</title>
     <style>
         /* [스타일] 전체 배경 및 레이아웃 */
@@ -17,6 +17,11 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
+            
+            /* [수정됨] 더블 탭 확대 방지 및 터치 최적화 */
+            touch-action: manipulation; 
+            -webkit-user-select: none; /* 텍스트 선택 방지 (꾹 눌렀을 때 파란 블록 안 뜨게) */
+            user-select: none;
         }
 
         h1 { margin: 0 0 10px 0; font-size: 2rem; }
@@ -25,8 +30,9 @@
         /* [게임 스테이지] */
         #game-stage {
             position: relative;
-            width: 800px;
-            height: 500px;
+            width: 100%; /* 모바일 대응: 800px -> 100% */
+            max-width: 800px;
+            height: 400px; /* 높이 살짝 조정 */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,17 +40,18 @@
 
         /* 바위 이미지 */
         #rock-image {
-            width: 400px;
+            width: 80%; /* 모바일 대응: 고정 px 대신 % 사용 */
+            max-width: 400px;
             height: auto;
             object-fit: contain;
             z-index: 10;
             transition: transform 0.1s;
         }
 
-        /* [수정됨] 날아가는 계란 크기 확대 */
+        /* 날아가는 계란 */
         .flying-egg {
             position: absolute;
-            width: 100px; /* 기존 40px -> 100px로 확대 (왕란!) */
+            width: 80px; /* 모바일에서 너무 크면 가리니까 살짝 조정 */
             height: auto;
             bottom: 50px;
             left: 50%;
@@ -66,28 +73,32 @@
 
         /* [UI] 하단 컨트롤 패널 */
         #ui-panel {
-            margin-top: 20px;
+            margin-top: 10px;
             text-align: center;
             z-index: 30;
+            width: 100%;
         }
 
-        #counter { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
+        #counter { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
         .count-highlight { color: #f4d03f; }
 
-        /* [수정됨] 버튼 계란 크기 확대 */
+        /* 버튼 계란 */
         #throw-btn {
             background: none;
             border: none;
             cursor: pointer;
             transition: transform 0.1s;
+            
+            /* [수정됨] 모바일 터치 최적화 */
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent; /* 터치 시 번쩍거리는 파란 박스 제거 */
         }
         #throw-btn img {
-            width: 100px; /* 기존 60px -> 100px로 확대 */
+            width: 100px;
             filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
         }
         #throw-btn:active img { transform: scale(0.9); }
-        #throw-btn:hover img { filter: drop-shadow(0 0 15px rgba(244, 208, 63, 0.6)); }
-
+        
         /* 게임 종료 시 스타일 */
         .disabled { filter: grayscale(100%); pointer-events: none; opacity: 0.5; }
         .success-msg { color: #4CAF50; font-size: 1.2rem; font-weight: bold; margin-top: 10px; animation: pop-in 0.5s; }
@@ -100,17 +111,17 @@
 </head>
 <body>
 
-    <h1></h1>
-    <p class="sub-text">"계란을 클릭해 바위를 깨뜨리세요."</p>
+    <h1>Threshold</h1>
+    <p class="sub-text">"임계점을 향한 노크"</p>
 
     <div id="game-stage">
         <img id="rock-image" src="rock.png" alt="바위">
     </div>
 
     <div id="ui-panel">
-        <div id="counter">던진 횟수: <span id="count-num" class="count-highlight">0</span></div>
+        <div id="counter">NO. <span id="count-num" class="count-highlight">0</span></div>
         
-        <button id="throw-btn" onclick="throwEgg()">
+        <button id="throw-btn">
             <img src="egg.png" alt="계란 던지기">
         </button>
         <div id="result-msg"></div>
@@ -129,22 +140,35 @@
 
         function init() {
             targetCount = Math.floor(Math.random() * (52 - 33 + 1)) + 33;
-            console.log("목표 횟수(Cheat):", targetCount);
+            console.log("목표 횟수:", targetCount);
         }
         init();
 
+        // [수정됨] 클릭과 터치 이벤트를 모두 처리하도록 변경
+        // 모바일에서 click 이벤트는 약간의 딜레이(300ms)가 있을 수 있어서 touchstart도 고려
+        throwBtn.addEventListener('click', throwEgg); 
+        throwBtn.addEventListener('touchstart', function(e) {
+            e.preventDefault(); // 기본 터치 동작 방지 (확대 등)
+            throwEgg();
+        }, {passive: false});
+
+
         function throwEgg() {
             if (isGameClear) return;
+
+            // 버튼 눌림 효과 (터치 시각 반응)
+            const btnImg = throwBtn.querySelector('img');
+            btnImg.style.transform = 'scale(0.9)';
+            setTimeout(() => { btnImg.style.transform = 'scale(1)'; }, 100);
 
             const flyingEgg = document.createElement('img');
             flyingEgg.src = 'egg.png';
             flyingEgg.className = 'flying-egg';
             stageElem.appendChild(flyingEgg);
 
+            // 애니메이션
             setTimeout(() => {
-                // 바위쪽으로 날아가면서 작아지는 비율 조정
-                // scale(0.5) -> scale(0.6)으로 살짝 더 크게 보이게 조정함
-                flyingEgg.style.bottom = '250px'; 
+                flyingEgg.style.bottom = '200px'; // 모바일 화면 고려 높이 조정
                 flyingEgg.style.transform = 'translateX(-50%) scale(0.6) rotate(360deg)'; 
                 flyingEgg.style.opacity = '1';
             }, 10);
@@ -173,7 +197,7 @@
             rockElem.src = 'rock_broken.png';
             rockElem.style.transform = 'scale(1.1)'; 
             throwBtn.classList.add('disabled');
-            resultMsg.innerHTML = "🎉 축하합니다! " + count + "번 시도 끝에 바위를 이겼습니다.";
+            resultMsg.innerHTML = "🎉 축하합니다!<br>시스템이 해방되었습니다.";
             resultMsg.className = "success-msg";
         }
     </script>
